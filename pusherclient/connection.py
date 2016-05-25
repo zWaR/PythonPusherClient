@@ -2,6 +2,7 @@ from threading import Thread, Timer
 import websocket
 import logging
 import time
+import ssl
 
 try:
     import simplejson as json
@@ -105,7 +106,7 @@ class Connection(Thread):
             on_close=self._on_close
         )
 
-        self.socket.run_forever()
+        self.socket.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
         while self.needs_reconnect and not self.disconnect_called:
             self.logger.info("Attempting to connect again in %s seconds."
@@ -116,7 +117,7 @@ class Connection(Thread):
             # We need to set this flag since closing the socket will set it to
             # false
             self.socket.keep_running = True
-            self.socket.run_forever()
+            self.socket.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
     def _on_open(self, ws):
         self.logger.info("Connection: Connection opened")

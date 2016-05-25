@@ -3,6 +3,7 @@ from .connection import Connection
 import hashlib
 import hmac
 import logging
+import sys
 
 
 try:
@@ -10,6 +11,7 @@ try:
 except ImportError:
     import json
 
+PY3 = sys.version_info[0] == 3
 
 VERSION = "0.2.0"
 
@@ -21,6 +23,12 @@ class Pusher(object):
 
     def __init__(self, key, secure=True, secret=None, user_data=None, log_level=logging.INFO, daemon=True, port=None, reconnect_interval=10):
         self.key = key
+        if PY3:
+            string_type = str
+        else:
+            string_type = basestring
+        if isinstance(secret, string_type):
+            secret = secret.encode('utf8')
         self.secret = secret
         self.user_data = user_data or {}
 
@@ -106,7 +114,7 @@ class Pusher(object):
 
         if socket_id and key and channel_name and secret:
             subject = "%s:%s" % (socket_id, channel_name)
-            h = hmac.new(secret, subject, hashlib.sha256)
+            h = hmac.new(secret, subject.encode('utf8'), hashlib.sha256)
             auth_key = "%s:%s" % (key, h.hexdigest())
 
         return auth_key
@@ -117,7 +125,7 @@ class Pusher(object):
 
         if socket_id and key and channel_name and secret and user_data:
             subject = "%s:%s:%s" % (socket_id, channel_name, json.dumps(user_data))
-            h = hmac.new(secret, subject, hashlib.sha256)
+            h = hmac.new(secret, subject.encode('utf8'), hashlib.sha256)
             auth_key = "%s:%s" % (key, h.hexdigest())
 
         return auth_key
